@@ -5,6 +5,7 @@ import (
 
 	"github.com/thakur-vijay/geotrack-backend/internal/middleware"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/auth"
+	"github.com/thakur-vijay/geotrack-backend/internal/modules/groups"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/users"
 )
 
@@ -15,6 +16,7 @@ type Dependencies struct {
 	AuthMiddleware     *middleware.Middleware
 	ClientIdMiddleware *middleware.ClientIDMiddleware
 	UserHandler        *users.Handler
+	GroupsHandler      *groups.Handler
 }
 
 func NewRouter(dependencies Dependencies) http.Handler {
@@ -24,6 +26,7 @@ func NewRouter(dependencies Dependencies) http.Handler {
 	v1Mux := http.NewServeMux()
 	auth.RegisterRoutes(v1Mux, dependencies.AuthHandler, dependencies.AuthMiddleware, dependencies.ClientIdMiddleware)
 	users.RegisterRoutes(v1Mux, dependencies.UserHandler, dependencies.AuthMiddleware)
+	groups.RegisterRoutes(v1Mux, dependencies.GroupsHandler, dependencies.AuthMiddleware)
 	mux.Handle(v1Prefix+"/", http.StripPrefix(v1Prefix, v1Mux))
 
 	return mux
