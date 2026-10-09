@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: geotrack-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: geotrack
+      POSTGRES_PASSWORD: geotrack
+      POSTGRES_DB: geotrack
+    ports:
+      - "5434:5432"
+    volumes:
+      - geotrack_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  geotrack_postgres_data:
