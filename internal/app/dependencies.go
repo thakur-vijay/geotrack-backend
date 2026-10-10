@@ -31,26 +31,25 @@ func BuildRouter(db *sql.DB) http.Handler {
 
 	// Auth
 	authService := auth.NewService(userRepository, sessionService)
-	authHandler := auth.NewHandler(authService, sessionService, realtimeManager)
+	authHandler := auth.NewHandler(authService, sessionService)
 
 	//Middlewares
 	authMiddleware := middleware.NewAuthMiddleware(sessionService)
-	clientIdMiddleware := middleware.NewClientIDMiddleware()
-
 	//services
 	// Handlers
 	userHandler := users.NewHandler(userRepository)
 	groupsHandler := groups.NewHandler(groupsRepository)
 	regionsHandler := regions.NewHandler(regionsRepository)
+	realtimeHandler := realtime.NewHandler(realtimeManager, groupsRepository)
 
 	// Router
 	router := api.NewRouter(api.Dependencies{
-		AuthHandler:        authHandler,
-		AuthMiddleware:     authMiddleware,
-		ClientIdMiddleware: clientIdMiddleware,
-		UserHandler:        userHandler,
-		GroupsHandler:      groupsHandler,
-		RegionsHandler:     regionsHandler,
+		AuthHandler:    authHandler,
+		AuthMiddleware: authMiddleware,
+		UserHandler:    userHandler,
+		GroupsHandler:  groupsHandler,
+		RegionsHandler: regionsHandler,
+		RealtimeHander: realtimeHandler,
 	})
 
 	return router
