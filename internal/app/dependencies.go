@@ -8,6 +8,7 @@ import (
 	"github.com/thakur-vijay/geotrack-backend/internal/middleware"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/auth"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/groups"
+	"github.com/thakur-vijay/geotrack-backend/internal/modules/regions"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/sessions"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/users"
 	"github.com/thakur-vijay/geotrack-backend/internal/realtime"
@@ -21,6 +22,7 @@ func BuildRouter(db *sql.DB) http.Handler {
 	// Repositories
 	userRepository := users.NewRepository(db)
 	groupsRepository := groups.NewRepository(db)
+	regionsRepository := regions.NewRepository(db)
 
 	// Realtime
 	realtimeManager := realtime.NewManager()
@@ -39,6 +41,7 @@ func BuildRouter(db *sql.DB) http.Handler {
 	// Handlers
 	userHandler := users.NewHandler(userRepository)
 	groupsHandler := groups.NewHandler(groupsRepository)
+	regionsHandler := regions.NewHandler(regionsRepository)
 
 	// Router
 	router := api.NewRouter(api.Dependencies{
@@ -47,6 +50,7 @@ func BuildRouter(db *sql.DB) http.Handler {
 		ClientIdMiddleware: clientIdMiddleware,
 		UserHandler:        userHandler,
 		GroupsHandler:      groupsHandler,
+		RegionsHandler:     regionsHandler,
 	})
 
 	return router
