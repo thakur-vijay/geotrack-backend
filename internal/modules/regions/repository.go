@@ -313,3 +313,67 @@ func (r *Repository) Delete(
 
 	return nil
 }
+
+func (r *Repository) FetchByGroupID(
+	ctx context.Context,
+	groupID string,
+	userID string,
+) ([]SafeRegion, error) {
+	start := time.Now()
+
+	defer func() {
+		log.Printf("[DB] FetchSafeRegionsByGroupID: %v", time.Since(start))
+	}()
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT
+			id,
+			user_id,
+			group_id,
+			name,
+			latitude,
+			longitude,
+			radius_meters,
+			created_at,
+			updated_at
+		FROM safe_regions
+		WHERE group_id = $1
+		  AND user_id = $2
+		ORDER BY created_at DESC
+	`, groupID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var regions []SafeRegion
+
+	for rows.Next() {
+		var region SafeRegion
+
+		if err := rows.Scan(
+			&region.ID,
+			&region.UserID,
+			&region.GroupID,
+			&region.Name,
+			&region.Latitude,
+			&region.Longitude,
+			&region.RadiusMeters,
+			&region.CreatedAt,
+			&region.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		region.CreatedAt = region.CreatedAt.UTC()
+		region.UpdatedAt = region.UpdatedAt.UTC()
+
+		regions = append(regions, region)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return regions, nil
+}

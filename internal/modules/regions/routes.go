@@ -35,4 +35,6 @@ func RegisterRoutes(
 		"DELETE /safe-regions/{id}",
 		authMiddleware.RequireAuth(http.HandlerFunc(handler.Delete)),
 	)
+
+	mux.HandleFunc("GET /api/v1/groups/{group_id}/safe-regions", handler.FetchByGroupID)
 }

@@ -195,3 +195,30 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		"Safe region deleted successfully",
 	)
 }
+
+func (h *Handler) FetchByGroupID(w http.ResponseWriter, r *http.Request) {
+	groupID := r.PathValue("group_id")
+	userID, _ := middleware.UserID(r.Context())
+
+	regions, err := h.repository.FetchByGroupID(
+		r.Context(),
+		groupID,
+		userID,
+	)
+	if err != nil {
+		log.Printf("Fetch SafeRegions by GroupID error: %v", err)
+		response.Write(
+			w,
+			http.StatusInternalServerError,
+			"Safe regions could not be fetched",
+		)
+		return
+	}
+
+	response.WriteList(
+		w,
+		http.StatusOK,
+		"Safe regions fetched successfully",
+		regions,
+	)
+}
