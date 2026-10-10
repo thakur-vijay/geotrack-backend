@@ -36,5 +36,8 @@ func RegisterRoutes(
 		authMiddleware.RequireAuth(http.HandlerFunc(handler.Delete)),
 	)
 
-	mux.HandleFunc("GET /api/v1/groups/{group_id}/safe-regions", handler.FetchByGroupID)
+	mux.Handle(
+		"GET /groups/{group_id}/safe-regions",
+		authMiddleware.RequireAuth(http.HandlerFunc(handler.FetchByGroupID)),
+	)
 }
