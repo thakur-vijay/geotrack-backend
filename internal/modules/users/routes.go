@@ -15,4 +15,9 @@ func RegisterRoutes(
 		"GET /users/{id}",
 		authMiddleware.RequireAuth(http.HandlerFunc(handler.GetByID)),
 	)
+
+	mux.Handle(
+		"GET /groups/{groupID}/users",
+		authMiddleware.RequireAuth(http.HandlerFunc(handler.FetchUsers)),
+	)
 }

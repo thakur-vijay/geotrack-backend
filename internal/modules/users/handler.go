@@ -36,3 +36,16 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 	response.WriteItem(w, http.StatusOK, "user retrieved successfully", user)
 }
+
+func (h *Handler) FetchUsers(w http.ResponseWriter, r *http.Request) {
+	groupID := r.PathValue("groupID")
+
+	users, err := h.repository.FetchUsers(r.Context(), groupID)
+	if err != nil {
+		log.Printf("FetchUsers error: %v", err)
+		response.Write(w, http.StatusInternalServerError, "users could not be retrieved")
+		return
+	}
+
+	response.WriteList(w, http.StatusOK, "users retrieved successfully", users)
+}

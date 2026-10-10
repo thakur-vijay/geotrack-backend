@@ -61,7 +61,7 @@ func (s *Service) CreateSession(ctx context.Context, userID string) (string, str
 		UserID:           userID,
 		AccessTokenHash:  accessTokenHash,
 		RefreshTokenHash: refreshTokenHash,
-		ExpiresAt:        now.Add(15 * time.Minute).Format(time.RFC3339),
+		ExpiresAt:        now.Add(15 * time.Hour).Format(time.RFC3339),
 		RefreshExpiresAt: now.Add(30 * 24 * time.Hour).Format(time.RFC3339),
 		CreatedAt:        now.Format(time.RFC3339),
 	}
