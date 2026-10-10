@@ -40,7 +40,7 @@ func BuildRouter(db *sql.DB) http.Handler {
 	userHandler := users.NewHandler(userRepository)
 	groupsHandler := groups.NewHandler(groupsRepository)
 	regionsHandler := regions.NewHandler(regionsRepository)
-	realtimeHandler := realtime.NewHandler(realtimeManager, groupsRepository)
+	realtimeHandler := realtime.NewHandler(realtimeManager, groupsRepository, regionsRepository)
 
 	// Router
 	router := api.NewRouter(api.Dependencies{
