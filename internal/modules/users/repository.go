@@ -46,8 +46,9 @@ func (r *Repository) Create(ctx context.Context, user User) error {
 
 func (r *Repository) GetByID(ctx context.Context, id string) (*User, error) {
 	var user User
+
 	err := r.db.QueryRowContext(ctx, `
-		SELECT id, full_name, email created_at, updated_at
+		SELECT id, full_name, email, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`, id).Scan(
@@ -64,6 +65,7 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*User, error) {
 
 	user.CreatedAt = user.CreatedAt.UTC()
 	user.UpdatedAt = user.UpdatedAt.UTC()
+
 	return &user, nil
 }
 
