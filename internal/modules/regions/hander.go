@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"uuid"
-
+	"github.com/google/uuid"
 	"github.com/thakur-vijay/geotrack-backend/internal/middleware"
 	"github.com/thakur-vijay/geotrack-backend/internal/response"
 )
@@ -38,6 +37,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	region := SafeRegion{
 		ID:           uuid.New().String(),
 		UserID:       userID,
+		GroupID:      request.GroupID,
 		Name:         request.Name,
 		Latitude:     request.Latitude,
 		Longitude:    request.Longitude,

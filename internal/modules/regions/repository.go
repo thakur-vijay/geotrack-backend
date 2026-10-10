@@ -32,6 +32,7 @@ func (r *Repository) Create(
 		INSERT INTO safe_regions (
 			id,
 			user_id,
+			group_id,
 			name,
 			latitude,
 			longitude,
@@ -39,10 +40,11 @@ func (r *Repository) Create(
 			created_at,
 			updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`,
 		region.ID,
 		region.UserID,
+		region.GroupID,
 		region.Name,
 		region.Latitude,
 		region.Longitude,
@@ -68,6 +70,7 @@ func (r *Repository) Fetch(
 		SELECT
 			id,
 			user_id,
+			group_id,
 			name,
 			latitude,
 			longitude,
@@ -91,6 +94,7 @@ func (r *Repository) Fetch(
 		if err := rows.Scan(
 			&region.ID,
 			&region.UserID,
+			&region.GroupID,
 			&region.Name,
 			&region.Latitude,
 			&region.Longitude,
@@ -131,6 +135,7 @@ func (r *Repository) FetchByID(
 		SELECT
 			id,
 			user_id,
+			group_id,
 			name,
 			latitude,
 			longitude,
@@ -146,6 +151,7 @@ func (r *Repository) FetchByID(
 	).Scan(
 		&region.ID,
 		&region.UserID,
+		&region.GroupID,
 		&region.Name,
 		&region.Latitude,
 		&region.Longitude,
@@ -183,6 +189,12 @@ func (r *Repository) Update(
 	set := []string{}
 	args := []any{}
 	arg := 1
+
+	if request.GroupID != nil {
+		set = append(set, fmt.Sprintf("group_id = $%d", arg))
+		args = append(args, *request.GroupID)
+		arg++
+	}
 
 	if request.Name != nil {
 		set = append(set, fmt.Sprintf("name = $%d", arg))
@@ -226,6 +238,7 @@ func (r *Repository) Update(
 		 RETURNING
 			id,
 			user_id,
+			group_id,
 			name,
 			latitude,
 			longitude,
@@ -246,6 +259,7 @@ func (r *Repository) Update(
 	).Scan(
 		&updatedRegion.ID,
 		&updatedRegion.UserID,
+		&updatedRegion.GroupID,
 		&updatedRegion.Name,
 		&updatedRegion.Latitude,
 		&updatedRegion.Longitude,
