@@ -338,15 +338,15 @@ func (r *Repository) FetchByGroupID(
 			updated_at
 		FROM safe_regions
 		WHERE group_id = $1
-		  AND user_id = $2
 		ORDER BY created_at DESC
-	`, groupID, userID)
+	`, groupID)
+
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var regions []SafeRegion
+	regions := make([]SafeRegion, 0)
 
 	for rows.Next() {
 		var region SafeRegion
