@@ -141,42 +141,52 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		response.Write(w, http.StatusUnauthorized, "authentication required")
 		return
 	}
+
 	groupID := r.URL.Query().Get("group_id")
-	if groupID == "" {
-		response.Write(w, http.StatusBadRequest, "group_id is required")
-		return
-	}
-	members, err := h.groupRepository.GetMembers(r.Context(), groupID)
-	if err != nil {
-		response.Write(w, http.StatusInternalServerError, "failed to fetch group members")
-		return
-	}
-	isMember := false
-	memberIDs := make([]string, 0, len(members))
-	for _, member := range members {
-		memberIDs = append(memberIDs, member.ID)
-		if member.ID == userID {
-			isMember = true
+	var memberIDs []string
+
+	if groupID != "" {
+		members, err := h.groupRepository.GetMembers(r.Context(), groupID)
+		if err != nil {
+			response.Write(w, http.StatusInternalServerError, "failed to fetch group members")
+			return
+		}
+
+		isMember := false
+		memberIDs = make([]string, 0, len(members))
+
+		for _, member := range members {
+			memberIDs = append(memberIDs, member.ID)
+
+			if member.ID == userID {
+				isMember = true
+			}
+		}
+
+		if !isMember {
+			response.Write(w, http.StatusForbidden, "not a member of this group")
+			return
 		}
 	}
-	if !isMember {
-		response.Write(w, http.StatusForbidden, "not a member of this group")
-		return
-	}
+
 	if err := h.sessionService.Logout(r.Context(), sessionID); err != nil {
 		log.Printf("Logout error: %v", err)
 		response.Write(w, http.StatusInternalServerError, "logout failed")
 		return
 	}
-	h.realtime.DisconnectUser(userID)
-	event := realtime.NewUserDisconnectedEvent(userID, groupID)
-	payload, err := json.Marshal(event)
-	if err != nil {
-		log.Printf("User disconnected event marshal error: %v", err)
-		response.Write(w, http.StatusOK, "logout successful")
-		return
-	}
-	h.realtime.BroadcastToUsers(r.Context(), memberIDs, payload)
-	response.Write(w, http.StatusOK, "logout successful")
 
+	h.realtime.DisconnectUser(userID)
+
+	if groupID != "" {
+		event := realtime.NewUserDisconnectedEvent(userID, groupID)
+
+		payload, err := json.Marshal(event)
+		if err != nil {
+			log.Printf("User disconnected event marshal error: %v", err)
+		} else {
+			h.realtime.BroadcastToUsers(r.Context(), memberIDs, payload)
+		}
+	}
+
+	response.Write(w, http.StatusOK, "logout successful")
 }
