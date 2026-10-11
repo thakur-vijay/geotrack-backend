@@ -1,0 +1,2 @@
+ALTER TABLE groups
+ADD COLUMN created_by UUID REFERENCES users (id) ON DELETE SET NULL;

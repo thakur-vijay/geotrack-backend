@@ -34,13 +34,15 @@ func (r *Repository) Create(
 		INSERT INTO groups (
 			id,
 			name,
+			created_by,
 			created_at,
 			updated_at
 		)
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1, $2, $3, $4, $5)
 	`,
 		group.ID,
 		group.Name,
+		creatorID,
 		group.CreatedAt.UTC(),
 		group.UpdatedAt.UTC(),
 	)
@@ -67,43 +69,6 @@ func (r *Repository) Create(
 	}
 
 	return nil
-}
-
-func (r *Repository) GetByID(
-	ctx context.Context,
-	id string,
-) (Group, error) {
-	var group Group
-
-	err := r.db.QueryRowContext(ctx, `
-		SELECT
-			id,
-			name,
-			created_at,
-			updated_at
-		FROM groups
-		WHERE id = $1
-	`, id).Scan(
-		&group.ID,
-		&group.Name,
-		&group.CreatedAt,
-		&group.UpdatedAt,
-	)
-	if err != nil {
-		return Group{}, err
-	}
-
-	members, err := r.GetMembers(ctx, group.ID)
-	if err != nil {
-		return Group{}, fmt.Errorf("get group members: %w", err)
-	}
-
-	group.Members = members
-
-	group.CreatedAt = group.CreatedAt.UTC()
-	group.UpdatedAt = group.UpdatedAt.UTC()
-
-	return group, nil
 }
 
 func (r *Repository) GetMembers(
@@ -157,6 +122,44 @@ func (r *Repository) GetMembers(
 	return members, nil
 }
 
+func (r *Repository) GetByID(
+	ctx context.Context,
+	id string,
+) (Group, error) {
+	var group Group
+
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			id,
+			name,
+			created_by,
+			created_at,
+			updated_at
+		FROM groups
+		WHERE id = $1
+	`, id).Scan(
+		&group.ID,
+		&group.Name,
+		&group.CreatedBy,
+		&group.CreatedAt,
+		&group.UpdatedAt,
+	)
+	if err != nil {
+		return Group{}, err
+	}
+
+	members, err := r.GetMembers(ctx, group.ID)
+	if err != nil {
+		return Group{}, fmt.Errorf("get group members: %w", err)
+	}
+
+	group.Members = members
+	group.CreatedAt = group.CreatedAt.UTC()
+	group.UpdatedAt = group.UpdatedAt.UTC()
+
+	return group, nil
+}
+
 func (r *Repository) GetByUserID(
 	ctx context.Context,
 	userID string,
@@ -165,6 +168,7 @@ func (r *Repository) GetByUserID(
 		SELECT
 			g.id,
 			g.name,
+			g.created_by,
 			g.created_at,
 			g.updated_at
 		FROM groups g
@@ -186,6 +190,7 @@ func (r *Repository) GetByUserID(
 		err := rows.Scan(
 			&group.ID,
 			&group.Name,
+			&group.CreatedBy,
 			&group.CreatedAt,
 			&group.UpdatedAt,
 		)

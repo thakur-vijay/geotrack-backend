@@ -12,13 +12,25 @@ import (
 	"github.com/thakur-vijay/geotrack-backend/internal/response"
 )
 
-type Handler struct {
-	repository *Repository
+type OnlineChecker interface {
+	IsOnline(userID string) bool
 }
 
-func NewHandler(repository *Repository) *Handler {
+type Handler struct {
+	repository    *Repository
+	onlineChecker OnlineChecker
+}
+
+func NewHandler(repository *Repository, onlineChecker OnlineChecker) *Handler {
 	return &Handler{
-		repository: repository,
+		repository:    repository,
+		onlineChecker: onlineChecker,
+	}
+}
+
+func (h *Handler) setMembersOnlineStatus(group *Group) {
+	for i := range group.Members {
+		group.Members[i].IsOnline = h.onlineChecker.IsOnline(group.Members[i].ID)
 	}
 }
 
@@ -47,6 +59,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	group := Group{
 		ID:        uuid.NewString(),
 		Name:      dto.Name,
+		CreatedBy: userID,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -97,6 +110,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.setMembersOnlineStatus(&group)
 	response.WriteItem(w, http.StatusOK, "group retrieved successfully", group)
 }
 
@@ -114,6 +128,9 @@ func (h *Handler) GetMyGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for i := range groups {
+		h.setMembersOnlineStatus(&groups[i])
+	}
 	response.WriteItem(w, http.StatusOK, "groups retrieved successfully", groups)
 }
 

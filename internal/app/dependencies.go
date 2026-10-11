@@ -38,7 +38,7 @@ func BuildRouter(db *sql.DB) http.Handler {
 	//services
 	// Handlers
 	userHandler := users.NewHandler(userRepository)
-	groupsHandler := groups.NewHandler(groupsRepository)
+	groupsHandler := groups.NewHandler(groupsRepository, realtimeManager)
 	regionsHandler := regions.NewHandler(regionsRepository)
 	realtimeHandler := realtime.NewHandler(realtimeManager, groupsRepository, regionsRepository)
 

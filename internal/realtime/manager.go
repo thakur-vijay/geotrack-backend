@@ -94,3 +94,11 @@ func (m *Manager) DisconnectUser(userID string) {
 		_ = conn.Close(websocket.StatusNormalClosure, "user logged out")
 	}
 }
+
+func (m *Manager) IsOnline(userID string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	_, exists := m.connections[userID]
+	return exists
+}
