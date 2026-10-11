@@ -83,3 +83,14 @@ func (m *Manager) BroadcastToUsers(
 		}
 	}
 }
+
+func (m *Manager) DisconnectUser(userID string) {
+	m.mu.Lock()
+	conn := m.connections[userID]
+	delete(m.connections, userID)
+	m.mu.Unlock()
+
+	if conn != nil {
+		_ = conn.Close(websocket.StatusNormalClosure, "user logged out")
+	}
+}

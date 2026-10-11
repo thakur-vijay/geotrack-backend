@@ -31,7 +31,7 @@ func BuildRouter(db *sql.DB) http.Handler {
 
 	// Auth
 	authService := auth.NewService(userRepository, sessionService)
-	authHandler := auth.NewHandler(authService, sessionService)
+	authHandler := auth.NewHandler(authService, sessionService, realtimeManager, groupsRepository)
 
 	//Middlewares
 	authMiddleware := middleware.NewAuthMiddleware(sessionService)

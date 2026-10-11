@@ -1,32 +1,42 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 
 	"github.com/thakur-vijay/geotrack-backend/internal/middleware"
+	"github.com/thakur-vijay/geotrack-backend/internal/modules/groups"
 	"github.com/thakur-vijay/geotrack-backend/internal/modules/sessions"
+	"github.com/thakur-vijay/geotrack-backend/internal/realtime"
 	"github.com/thakur-vijay/geotrack-backend/internal/response"
 )
 
-type Handler struct {
-	service        *Service
-	sessionService *sessions.Service
+type RealtimeManager interface {
+	DisconnectUser(userID string)
+	BroadcastToUsers(ctx context.Context, userIDs []string, message []byte)
 }
 
-type ClientDisconnecter interface {
-	DisconnectClient(userID, clientID string) error
+type Handler struct {
+	service         *Service
+	sessionService  *sessions.Service
+	realtime        RealtimeManager
+	groupRepository *groups.Repository
 }
 
 func NewHandler(
 	service *Service,
 	sessionService *sessions.Service,
+	realtime RealtimeManager,
+	groupRepository *groups.Repository,
 ) *Handler {
 	return &Handler{
-		service:        service,
-		sessionService: sessionService,
+		service:         service,
+		sessionService:  sessionService,
+		realtime:        realtime,
+		groupRepository: groupRepository,
 	}
 }
 
@@ -126,11 +136,47 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, ok := middleware.UserID(r.Context())
+	if !ok {
+		response.Write(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	groupID := r.URL.Query().Get("group_id")
+	if groupID == "" {
+		response.Write(w, http.StatusBadRequest, "group_id is required")
+		return
+	}
+	members, err := h.groupRepository.GetMembers(r.Context(), groupID)
+	if err != nil {
+		response.Write(w, http.StatusInternalServerError, "failed to fetch group members")
+		return
+	}
+	isMember := false
+	memberIDs := make([]string, 0, len(members))
+	for _, member := range members {
+		memberIDs = append(memberIDs, member.ID)
+		if member.ID == userID {
+			isMember = true
+		}
+	}
+	if !isMember {
+		response.Write(w, http.StatusForbidden, "not a member of this group")
+		return
+	}
 	if err := h.sessionService.Logout(r.Context(), sessionID); err != nil {
 		log.Printf("Logout error: %v", err)
 		response.Write(w, http.StatusInternalServerError, "logout failed")
 		return
 	}
-
+	h.realtime.DisconnectUser(userID)
+	event := realtime.NewUserDisconnectedEvent(userID, groupID)
+	payload, err := json.Marshal(event)
+	if err != nil {
+		log.Printf("User disconnected event marshal error: %v", err)
+		response.Write(w, http.StatusOK, "logout successful")
+		return
+	}
+	h.realtime.BroadcastToUsers(r.Context(), memberIDs, payload)
 	response.Write(w, http.StatusOK, "logout successful")
+
 }
